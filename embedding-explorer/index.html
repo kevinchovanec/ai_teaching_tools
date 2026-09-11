@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Embedding Explorer</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <h1>Embedding Explorer</h1>
+    <p>Type words or paragraphs and see how a language model represents their meaning as vectors — explore analogies, similarity, and the geometry of meaning. Everything runs in your browser; nothing is sent to a server.</p>
+    <div class="model-status" id="status-line">
+      <span class="dot loading" id="status-dot"></span>
+      <span id="status-text">Loading word vectors…</span>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button data-tab="word" class="active">Word Vectors</button>
+    <button data-tab="analogy">Analogies</button>
+    <button data-tab="similarity">Similarity</button>
+    <button data-tab="space">Paragraph Space</button>
+  </nav>
+
+  <section class="panel active" id="panel-word">
+    <div class="card">
+      <h2>Look up a word</h2>
+      <p class="hint">Type a word to see its 100-dimensional GloVe vector and its nearest neighbors by meaning.</p>
+      <label for="word-input">Word</label>
+      <input type="text" id="word-input" placeholder="e.g. king" autocomplete="off" />
+      <div class="error-msg" id="word-error" hidden></div>
+      <div class="results" id="word-results" hidden>
+        <svg class="vector-chart" id="word-chart" viewBox="0 0 640 160"></svg>
+        <div class="raw-values" id="word-raw"></div>
+      </div>
+    </div>
+    <div class="card" id="word-neighbors-card" hidden>
+      <h2>Nearest neighbors</h2>
+      <p class="hint">Words whose vectors point in a similar direction (highest cosine similarity), out of the top 15,000 most common English words.</p>
+      <ul class="neighbor-list" id="word-neighbors"></ul>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-analogy">
+    <div class="card">
+      <h2>Vector arithmetic</h2>
+      <p class="hint">The classic demo: <code>king − man + woman ≈ queen</code>. Word meaning behaves like geometry — try your own combination.</p>
+      <div class="inline-eq">
+        <input type="text" id="analogy-a" placeholder="king" autocomplete="off" />
+        <span class="op">−</span>
+        <input type="text" id="analogy-b" placeholder="man" autocomplete="off" />
+        <span class="op">+</span>
+        <input type="text" id="analogy-c" placeholder="woman" autocomplete="off" />
+        <span class="op">=</span>
+        <span class="op">?</span>
+      </div>
+      <button class="action" id="analogy-run">Solve</button>
+      <div class="error-msg" id="analogy-error" hidden></div>
+      <div class="results" id="analogy-results" hidden>
+        <ul class="neighbor-list" id="analogy-neighbors"></ul>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Try these</h2>
+      <p class="hint">Quick examples — click to load.</p>
+      <div class="row" id="analogy-presets"></div>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-similarity">
+    <div class="card">
+      <h2>Compare two texts</h2>
+      <p class="hint">Enter two words, phrases, or paragraphs. Single vocabulary words use GloVe directly; anything longer uses a small transformer model (downloaded once, then cached) so word order and context are taken into account.</p>
+      <div class="row">
+        <div>
+          <label for="sim-a">Text A</label>
+          <textarea id="sim-a" placeholder="a happy dog running in a field"></textarea>
+        </div>
+        <div>
+          <label for="sim-b">Text B</label>
+          <textarea id="sim-b" placeholder="a joyful puppy sprinting through grass"></textarea>
+        </div>
+      </div>
+      <button class="action" id="sim-run">Compare</button>
+      <div class="error-msg" id="sim-error" hidden></div>
+      <div class="results" id="sim-results" hidden>
+        <div class="similarity-readout">
+          <span class="value" id="sim-value">0.00</span>
+          <span class="label">cosine similarity</span>
+        </div>
+        <div class="similarity-meter"><div class="fill" id="sim-fill"></div></div>
+        <p class="note" id="sim-method"></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-space">
+    <div class="card">
+      <h2>Paragraph space</h2>
+      <p class="hint">Add several words or paragraphs and see how they cluster in a 2D projection (PCA) of their embedding space — items with related meaning land closer together. Uses the sentence transformer model.</p>
+      <div class="item-list" id="space-items"></div>
+      <button class="ghost" id="space-add">+ add item</button>
+      <button class="action" id="space-run">Plot</button>
+      <div class="error-msg" id="space-error" hidden></div>
+      <div class="results" id="space-results" hidden>
+        <svg class="scatter-chart" id="space-chart" viewBox="0 0 640 480"></svg>
+        <h2 style="margin-top:18px;">Pairwise similarity</h2>
+        <div style="overflow-x:auto;">
+          <table class="table-view" id="space-table"></table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Runs fully client-side using <a href="https://nlp.stanford.edu/projects/glove/" target="_blank" rel="noopener">GloVe</a> word vectors and <a href="https://github.com/xenova/transformers.js" target="_blank" rel="noopener">transformers.js</a> (all-MiniLM-L6-v2). No data leaves your browser.
+  </footer>
+</div>
+
+<div class="tooltip" id="tooltip" hidden></div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

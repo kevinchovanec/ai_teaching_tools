@@ -1,38 +1,17 @@
-# Embedding Explorer
+# AI Teaching Tools
 
-An interactive, static (no backend) website for exploring word and sentence embeddings in the browser.
+A collection of small, interactive, browser-based tools for teaching AI/ML concepts. Each tool is self-contained, static (no backend), and lives in its own subdirectory so it can be linked to directly or browsed from the [index](index.html).
 
-## Features
-- Type a word, see its embedding vector
-- Vector arithmetic / analogies (`king - man + woman = ?`) using a trimmed GloVe word-vector table
-- Cosine similarity between any two words or paragraphs
-- Paragraph/sentence embeddings via a small transformer model run client-side ([transformers.js](https://github.com/xenova/transformers.js), `all-MiniLM-L6-v2`)
-- 2D projection (PCA) scatter plot of embedded items
+## Tools
 
-## Why two models?
-Word-level analogies (`king - man + woman ≈ queen`) work best with classic static word vectors (GloVe), not contextual sentence embeddings. Paragraph similarity needs open vocabulary + context, which GloVe can't do well. So this uses:
-1. A trimmed GloVe 100d table (top 15,000 most frequent words) for word analogies/similarity — small static asset, no model download.
-2. `all-MiniLM-L6-v2` via transformers.js for paragraph embeddings — downloaded once by the browser and cached.
+- [**Embedding Explorer**](embedding-explorer/) — type words or paragraphs and explore how a language model represents meaning as vectors: word analogies (`king − man + woman ≈ queen`), similarity, and a 2D projection of embedding space. See its own [README](embedding-explorer/README.md) for details.
 
-Both run **entirely client-side**. No API keys, no server, no per-use cost.
+## Adding a new tool
 
-## Local development
-This is a plain static site — no build step. Serve it with any static file server, e.g.:
-
-```
-npx serve .
-```
-
-or
-
-```
-python -m http.server 8000
-```
-
-Then open the printed local URL in a browser.
+1. Create a new subdirectory at the repo root (e.g. `tokenizer-viz/`) with its own `index.html`, assets, and README.
+2. Add a link + one-line description to the list above and to [index.html](index.html).
+3. Keep tools static and self-contained — no shared build step, no backend. Load any large models/datasets at runtime from a CDN rather than committing them, so the repo stays light as more tools are added.
 
 ## Deployment
-Push to GitHub and enable GitHub Pages (Settings → Pages → deploy from branch), or use any static host.
 
-## Data
-`data/glove.6B.100d.top15k.txt` is a trimmed excerpt of Stanford's [GloVe](https://nlp.stanford.edu/projects/glove/) 6B 100-dimensional vectors (top 15,000 most frequent words, which is how the source file is ordered). GloVe is released under the [Open Data Commons Public Domain Dedication and License (PDDL)](https://opendatacommons.org/licenses/pddl/1-0/).
+This repo is designed to be served as-is via GitHub Pages: each tool is reachable at `<pages-url>/<tool-directory>/`, with `index.html` at the root as the landing page.
