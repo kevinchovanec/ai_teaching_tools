@@ -61,6 +61,18 @@ header p {
   margin: 0 0 36px;
 }
 
+.section-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin: 32px 0 12px;
+}
+.section-label:first-of-type {
+  margin-top: 0;
+}
+
 .tool-list {
   display: flex;
   flex-direction: column;
@@ -77,9 +89,9 @@ header p {
   text-decoration: none;
   color: inherit;
 }
-.tool-card:hover h2 { color: var(--accent); }
+.tool-card:hover h3 { color: var(--accent); }
 
-.tool-card h2 {
+.tool-card h3 {
   font-size: 17px;
   margin: 0 0 6px;
 }

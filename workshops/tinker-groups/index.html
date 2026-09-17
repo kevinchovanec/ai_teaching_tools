@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tinker Group Cards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F2F4F3;
+  --surface: #FFFFFF;
+  --ink: #1C2624;
+  --muted: #56625F;
+  --line: #D5DBD9;
+  --issue: #1F4B43;
+  --issue-2: #2A5C53;
+  --twist: #4A3F63;
+  --twist-2: #5A4F75;
+  --on-dark: #F4F7F6;
+  --focus: #C08A1E;
+  --sans: "Public Sans", "Segoe UI", Arial, sans-serif;
+  --serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141A19; --surface: #1D2523; --ink: #E6ECEA; --muted: #A3B0AC; --line: #33403D;
+    --issue: #2F6B60; --issue-2: #3A7A6E; --twist: #62568A; --twist-2: #6F6398; --on-dark: #F4F7F6; --focus: #E0B04A;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141A19; --surface: #1D2523; --ink: #E6ECEA; --muted: #A3B0AC; --line: #33403D;
+  --issue: #2F6B60; --issue-2: #3A7A6E; --twist: #62568A; --twist-2: #6F6398; --on-dark: #F4F7F6; --focus: #E0B04A;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--sans); font-size: 1rem; line-height: 1.5;
+}
+.wrap { max-width: 1100px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+header h1 { font-size: 2rem; line-height: 1.15; margin: 0 0 .5rem; font-weight: 700; letter-spacing: -.01em; }
+header p { margin: 0 0 1rem; color: var(--muted); max-width: 68ch; }
+.roll-panel {
+  display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap;
+  background: var(--surface); border: 1px solid var(--line); border-left: 8px solid var(--issue);
+  border-radius: 6px; padding: 1.25rem 1.5rem; margin: 0 0 1.5rem; max-width: 72ch;
+}
+.roll-num {
+  width: 6.5rem; height: 6.5rem; flex: none; display: flex; align-items: center; justify-content: center;
+  border-radius: 8px; background: var(--issue); color: var(--on-dark);
+  font-size: 3.25rem; font-weight: 700; line-height: 1;
+}
+.roll-side { flex: 1 1 260px; }
+.roll-msg { margin: 0 0 .6rem; font-weight: 600; font-size: 1.1rem; }
+.roll-buttons { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: .6rem; }
+button.action.primary { background: var(--issue); color: var(--on-dark); border-color: var(--issue); }
+button.action.primary:hover { background: var(--issue-2); }
+button.action:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+button.action:disabled { opacity: .5; cursor: not-allowed; }
+.roll-note { margin: 0; color: var(--muted); font-size: .92rem; }
+.roll-history { margin: .35rem 0 0; color: var(--muted); font-size: .92rem; min-height: 1.4em; }
+details {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
+  padding: .75rem 1rem; margin: 0 0 1.5rem; max-width: 72ch;
+}
+summary { cursor: pointer; font-weight: 600; }
+details ol { margin: .75rem 0 .25rem; padding-left: 1.25rem; }
+details li { margin-bottom: .35rem; }
+.toolbar { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin: 0 0 1rem; }
+button.action {
+  font: 600 .95rem var(--sans); color: var(--ink); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 4px; padding: .5rem .9rem; cursor: pointer;
+}
+button.action:hover { border-color: var(--muted); }
+.draw-result { color: var(--muted); font-size: .95rem; min-height: 1.5em; }
+section { margin-top: 2.25rem; }
+section h2 { font-size: 1.35rem; margin: 0 0 .25rem; }
+section > p { margin: 0 0 1rem; color: var(--muted); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .9rem; }
+.card { perspective: 900px; aspect-ratio: 5 / 7; }
+.card button {
+  width: 100%; height: 100%; padding: 0; border: 0; background: none; cursor: pointer;
+  position: relative; transform-style: preserve-3d; transition: transform .5s ease;
+  border-radius: 8px; font-family: var(--sans);
+}
+.card button:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.card.flipped button { transform: rotateY(180deg); }
+.face {
+  position: absolute; inset: 0; border-radius: 8px; backface-visibility: hidden;
+  display: flex; flex-direction: column; justify-content: center; align-items: center; padding: .75rem;
+}
+.back {
+  color: var(--on-dark);
+  background:
+    repeating-linear-gradient(45deg, transparent 0 10px, rgba(255,255,255,.05) 10px 11px),
+    linear-gradient(160deg, var(--issue-2), var(--issue));
+  box-shadow: inset 0 0 0 6px var(--issue), inset 0 0 0 7px rgba(255,255,255,.25);
+}
+.twist .back {
+  background:
+    repeating-linear-gradient(-45deg, transparent 0 10px, rgba(255,255,255,.05) 10px 11px),
+    linear-gradient(160deg, var(--twist-2), var(--twist));
+  box-shadow: inset 0 0 0 6px var(--twist), inset 0 0 0 7px rgba(255,255,255,.25);
+}
+.back .num { font-size: clamp(2.5rem, 7vw, 3.75rem); font-weight: 700; line-height: 1; }
+.back .kind { font-size: .8rem; margin-top: .5rem; opacity: .85; }
+.front {
+  transform: rotateY(180deg); background: var(--surface); color: var(--ink);
+  border: 1px solid var(--line); text-align: center;
+}
+.front .num { font-size: .85rem; color: var(--muted); margin-bottom: .35rem; }
+.front .title { font-family: var(--serif); font-size: 1.05rem; font-weight: 600; line-height: 1.25; }
+.front .reopen { font-size: .8rem; color: var(--muted); margin-top: .6rem; text-decoration: underline; }
+.highlight button { outline: 3px solid var(--focus); outline-offset: 3px; }
+
+dialog {
+  width: min(640px, calc(100% - 2rem)); border: 0; border-radius: 8px; padding: 0;
+  background: var(--surface); color: var(--ink); box-shadow: 0 20px 60px rgba(0,0,0,.35);
+}
+dialog::backdrop { background: rgba(10,15,14,.55); }
+.dlg-bar { height: 8px; background: var(--issue); }
+dialog.is-twist .dlg-bar { background: var(--twist); }
+.dlg-body { padding: 1.5rem 1.75rem 1.5rem; }
+.dlg-num { color: var(--muted); font-size: .9rem; margin: 0 0 .25rem; }
+.dlg-title { font-family: var(--serif); font-size: 1.6rem; line-height: 1.2; margin: 0 0 1rem; }
+.dlg-text { font-family: var(--serif); font-size: 1.15rem; line-height: 1.65; margin: 0 0 1.25rem; max-width: 65ch; }
+.dlg-actions { display: flex; justify-content: flex-end; }
+
+@media (prefers-reduced-motion: reduce) { .card button { transition: none; } }
+@media (max-width: 480px) { header h1 { font-size: 1.6rem; } .dlg-body { padding: 1.25rem; } .dlg-text { font-size: 1.05rem; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Tinker Group Cards</h1>
+    <p>Roll for a card below, or click the card number you were assigned. Keep the twist cards face down until your timekeeper calls the 12-minute mark.</p>
+  </header>
+
+  <div class="roll-panel">
+    <div class="roll-num" id="roll-num" aria-live="polite">?</div>
+    <div class="roll-side">
+      <p class="roll-msg" id="roll-msg">Roll for your group's issue card.</p>
+      <div class="roll-buttons">
+        <button class="action primary" id="roll" type="button">Roll for a card</button>
+        <button class="action" id="open-rolled" type="button" hidden>Turn over this card</button>
+      </div>
+      <p class="roll-note">If the card doesn't affect any project in your group, roll again. Cards you've already rolled won't come up twice.</p>
+      <p class="roll-history" id="roll-history"></p>
+    </div>
+  </div>
+
+  <details>
+    <summary>Roles and discussion questions</summary>
+    <p style="margin:.75rem 0 0"><strong>Roles:</strong> timekeeper, recorder, and stakeholder voice (the person who speaks as the person on the card).</p>
+    <ol>
+      <li>Whose project is most affected by this card? Work the card through that project.</li>
+      <li>What is legitimate or accurate about this concern?</li>
+      <li>How would this person encounter the project, and what would they see?</li>
+      <li>What would you say to them in two or three plain sentences?</li>
+      <li>What, if anything, would you change about the project?</li>
+      <li>If the card does not apply to your project, explain why in one sentence.</li>
+    </ol>
+  </details>
+
+  <section aria-labelledby="issues-h">
+    <h2 id="issues-h">Issue cards</h2>
+    <p>Cards 1 to 12</p>
+    <div class="toolbar">
+      <button class="action" id="reset" type="button">Start over</button>
+      <span class="draw-result">Turns every card face down and clears your rolls.</span>
+    </div>
+    <div class="grid" id="issue-grid"></div>
+  </section>
+
+  <section aria-labelledby="twists-h">
+    <h2 id="twists-h">Twist cards</h2>
+    <p>Open at the 12-minute mark. Cards A to D</p>
+    <div class="grid" id="twist-grid"></div>
+  </section>
+</div>
+
+<dialog id="dlg" aria-labelledby="dlg-title">
+  <div class="dlg-bar"></div>
+  <div class="dlg-body">
+    <p class="dlg-num" id="dlg-num"></p>
+    <h3 class="dlg-title" id="dlg-title"></h3>
+    <p class="dlg-text" id="dlg-text"></p>
+    <div class="dlg-actions"><button class="action" id="dlg-close" type="button">Close</button></div>
+  </div>
+</dialog>
+
+<script>
+const ISSUES = [
+  [
+    "The data center opponent",
+    "A longtime participant in your community planning workshops lives near a proposed data center site. She has spoken at county meetings about water use and power bills. She notices the graphics in your latest workshop slides look AI-generated and emails you: “How can Extension claim to care about this community while using the technology that’s draining it?”"
+  ],
+  [
+    "The privacy skeptic",
+    "A small business owner in your entrepreneurship cohort hesitates when you mention using AI in your work. He isn’t expecting anything sinister. He’s tired of it all. Every app, loyalty card, and website seems to collect something, and he rarely knows where his information ends up. He asks a fair question: what happens to what he shares with you?"
+  ],
+  [
+    "The worried workforce",
+    "You’re presenting at a regional economic development meeting. A manufacturing plant manager and a group of administrative workers ask pointed questions about whether the tools you’re demonstrating are the same ones that will eliminate their jobs. They ask why Extension is promoting them."
+  ],
+  [
+    "The disclosure question",
+    "A community partner asks directly about something your project helped produce: “Did you make this, or did AI?” AI played a real role, and you also put in substantial work of your own. Your institution has no clear disclosure policy, and you realize you’ve never said anything about it either way."
+  ],
+  [
+    "The confident error",
+    "Your AI tool gave you something wrong that you didn’t catch, such as a wrong date, a misstated regulation, or a source that doesn’t say what the tool claimed. No one else ever used the tool, but the error made its way into your advice, a handout, or a recommendation. A stakeholder acted on it."
+  ],
+  [
+    "The connectivity gap",
+    "Your project creates an AI-powered resource for community members, but a significant share of your rural audience has limited broadband. Many are older adults who are uncomfortable with new technology. A county commissioner asks who this actually serves."
+  ],
+  [
+    "The Tribal partner",
+    "A Tribal nation you partner with has concerns about data sovereignty. Before sharing more knowledge, stories, or data with your program, they want to know whether any of it could end up in an AI tool, whether as uploaded documents, meeting notes, summaries, or material used to build something. You realize you haven’t thought that boundary through."
+  ],
+  [
+    "The local freelancer",
+    "A local freelancer who has done paid work for Extension or your community partners learns about your project. She might be a graphic designer, writer, evaluator, or consultant. She asks whether Extension, which says it supports local small businesses, is now using AI for work it used to hire people like her to do."
+  ],
+  [
+    "The colleague who opts out",
+    "A respected colleague has decided not to use AI, for reasons of ethics and quality, and she isn’t looking to be persuaded. Your project assumes others will use or rely on what you’ve built. That could mean consulting a shared notebook when answering stakeholder questions, reviewing AI-assisted drafts, or taking part in a workflow. She tells you she’d rather not be part of it."
+  ],
+  [
+    "The enthusiastic supervisor",
+    "Your supervisor loves your project and wants to scale it across the whole team next quarter. She mentions it could “free up capacity” during a budget conversation. Your colleagues are now nervous, and you worry the project is being used for something you didn’t intend."
+  ],
+  [
+    "The overreliant colleague",
+    "A new colleague has enthusiastically adopted your project. You notice they’re sending AI outputs to partners with little or no review, and their name is on the work."
+  ],
+  [
+    "The unapproved tool",
+    "Three weeks into your project, university IT tells you the tool you’re using isn’t approved for the kind of information you’ve been putting into it. Some of what you’ve already entered includes names, contact details, or other participant information."
+  ]
+];
+const TWISTS = [
+  [
+    "Go public",
+    "The person raising the concern posts about it publicly, and your county board chair forwards the post to your district director."
+  ],
+  [
+    "Key relationship",
+    "The person raising the concern is one of your most important volunteers or partners, someone who has championed Extension for twenty years."
+  ],
+  [
+    "Up the chain",
+    "A colleague who shares this concern raises it with your supervisor before talking to you. Your supervisor asks you to explain the project at next week’s staff meeting."
+  ],
+  [
+    "Inside the room",
+    "Someone in your breakout group shares this concern personally. Take it seriously."
+  ]
+];
+
+const dlg = document.getElementById("dlg");
+let lastTrigger = null;
+
+function openCard(label, title, text, isTwist, trigger) {
+  document.getElementById("dlg-num").textContent = label;
+  document.getElementById("dlg-title").textContent = title;
+  document.getElementById("dlg-text").textContent = text;
+  dlg.classList.toggle("is-twist", isTwist);
+  lastTrigger = trigger;
+  if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
+}
+function closeDlg() {
+  if (typeof dlg.close === "function") dlg.close(); else dlg.removeAttribute("open");
+}
+dlg.addEventListener("close", () => { if (lastTrigger) lastTrigger.focus(); });
+document.getElementById("dlg-close").addEventListener("click", closeDlg);
+dlg.addEventListener("click", e => { if (e.target === dlg) closeDlg(); });
+
+function buildGrid(containerId, items, isTwist) {
+  const grid = document.getElementById(containerId);
+  items.forEach(([title, text], i) => {
+    const id = isTwist ? String.fromCharCode(65 + i) : String(i + 1);
+    const kind = isTwist ? "Twist card" : "Issue card";
+    const wrap = document.createElement("div");
+    wrap.className = "card" + (isTwist ? " twist" : "");
+    wrap.dataset.id = id;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.setAttribute("aria-label", kind + " " + id + ", face down. Select to turn over.");
+    btn.innerHTML =
+      '<span class="face back" aria-hidden="true"><span class="num">' + id + '</span><span class="kind">' + kind + '</span></span>' +
+      '<span class="face front" aria-hidden="true"><span class="num">' + kind + ' ' + id + '</span><span class="title"></span><span class="reopen">Read card</span></span>';
+    btn.querySelector(".front .title").textContent = title;
+    btn.addEventListener("click", () => {
+      wrap.classList.add("flipped");
+      wrap.classList.remove("highlight");
+      btn.setAttribute("aria-label", kind + " " + id + ": " + title + ". Select to read.");
+      setTimeout(() => openCard(kind + " " + id, title, text, isTwist, btn),
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 450);
+    });
+    wrap.appendChild(btn);
+    grid.appendChild(wrap);
+  });
+}
+buildGrid("issue-grid", ISSUES, false);
+buildGrid("twist-grid", TWISTS, true);
+
+const rolled = [];
+const rollBtn = document.getElementById("roll");
+const openBtn = document.getElementById("open-rolled");
+const rollNum = document.getElementById("roll-num");
+const rollMsg = document.getElementById("roll-msg");
+const rollHistory = document.getElementById("roll-history");
+let current = null;
+
+rollBtn.addEventListener("click", () => {
+  const remaining = [];
+  for (let i = 1; i <= ISSUES.length; i++) if (!rolled.includes(i)) remaining.push(i);
+  if (remaining.length === 0) {
+    rollMsg.textContent = "Every card has been rolled. Pick the one that fit best, or start over.";
+    rollBtn.disabled = true;
+    return;
+  }
+  document.querySelectorAll(".card.highlight").forEach(c => c.classList.remove("highlight"));
+  current = remaining[Math.floor(Math.random() * remaining.length)];
+  rolled.push(current);
+  rollNum.textContent = current;
+  rollMsg.textContent = "Your group rolled card " + current + ".";
+  rollBtn.textContent = "Roll again";
+  openBtn.hidden = false;
+  document.querySelector('#issue-grid .card[data-id="' + current + '"]').classList.add("highlight");
+  const earlier = rolled.slice(0, -1);
+  rollHistory.textContent = earlier.length ? "Already rolled: " + earlier.join(", ") : "";
+});
+
+openBtn.addEventListener("click", () => {
+  if (current === null) return;
+  const card = document.querySelector('#issue-grid .card[data-id="' + current + '"]');
+  card.scrollIntoView({ block: "center", behavior: "smooth" });
+  card.querySelector("button").click();
+});
+
+document.getElementById("reset").addEventListener("click", () => {
+  document.querySelectorAll(".card").forEach(c => {
+    c.classList.remove("flipped", "highlight");
+    const isTwist = c.classList.contains("twist");
+    c.querySelector("button").setAttribute("aria-label",
+      (isTwist ? "Twist card " : "Issue card ") + c.dataset.id + ", face down. Select to turn over.");
+  });
+  rolled.length = 0;
+  current = null;
+  rollNum.textContent = "?";
+  rollMsg.textContent = "Roll for your group's issue card.";
+  rollBtn.textContent = "Roll for a card";
+  rollBtn.disabled = false;
+  openBtn.hidden = true;
+  rollHistory.textContent = "";
+});
+</script>
+</body>
+</html>
