@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Attention Lab</title>
+<link rel="icon" href="data:," />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="home" href="../../">← AI Teaching Tools</a>
+    <h1>Attention Lab</h1>
+    <p>Compute attention by hand, see why each term is there, then inspect the same math in GPT-2. Assumes matrix multiplication, softmax, and basic gradients. Numbers are rounded for display only.</p>
+    <math display="block" aria-label="A equals softmax of Q K transpose over square root of d k plus M; Z equals A V">
+      <mi>A</mi><mo>=</mo><mi>softmax</mi>
+      <mrow><mo>(</mo><mfrac><mrow><mi>Q</mi><msup><mi>K</mi><mo>⊤</mo></msup></mrow><msqrt><msub><mi>d</mi><mi>k</mi></msub></msqrt></mfrac><mo>+</mo><mi>M</mi><mo>)</mo></mrow>
+      <mo>,</mo><mspace width="1em"></mspace><mi>Z</mi><mo>=</mo><mi>A</mi><mi>V</mi>
+    </math>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Attention lessons">
+    <button role="tab" id="tab-hand" aria-controls="panel-hand" data-tab="hand">By hand</button>
+    <button role="tab" id="tab-scaling" aria-controls="panel-scaling" data-tab="scaling">Why √dₖ?</button>
+    <button role="tab" id="tab-masking" aria-controls="panel-masking" data-tab="masking">Masking</button>
+    <button role="tab" id="tab-gpt2" aria-controls="panel-gpt2" data-tab="gpt2">Inside GPT-2</button>
+    <button role="tab" id="tab-experiments" aria-controls="panel-experiments" data-tab="experiments">Break it</button>
+  </nav>
+
+  <main>
+  <section id="panel-hand" role="tabpanel" aria-labelledby="tab-hand">
+    <div class="card">
+      <h2>Inputs and learned projections</h2>
+      <p class="hint">Three tokens, each a 4-dimensional row of X. Three matrices map them into a 3-dimensional query, key, and value space. In a real model the W matrices are learned. Edit any number.</p>
+      <div class="grid"><div id="edit-x"></div><div id="edit-WQ"></div><div id="edit-WK"></div><div id="edit-WV"></div></div>
+      <button id="hand-reset">Reset numbers</button>
+    </div>
+    <div class="card">
+      <h2 id="step-title"></h2>
+      <p class="hint" id="step-hint"></p>
+      <div id="step-matrix"></div>
+      <p class="note">Click any cell to see its arithmetic. No mask yet (M = 0).</p>
+      <div class="work" id="step-work" aria-live="polite"></div>
+      <div class="controls"><button id="step-back">← Back</button><button id="step-next">Next →</button></div>
+      <details>
+        <summary>Shapes, and the same thing for one token</summary>
+        <p>With n tokens, X is n×d, each W is d×dₖ, and Q, K and V are n×dₖ. So QKᵀ is n×n and Z = AV is n×dₖ. (In general V may have a different width, dᵥ.)</p>
+        <p>For token i: zᵢ = Σⱼ αᵢⱼ vⱼ, where αᵢⱼ = exp(qᵢ·kⱼ/√dₖ) / Σₗ exp(qᵢ·kₗ/√dₖ).</p>
+        <p>Multi-head attention runs this h times with different W matrices, concatenates the outputs, and multiplies by one more learned matrix W_O.</p>
+      </details>
+    </div>
+    <div class="card">
+      <h2>Your turn</h2>
+      <p class="hint" id="quiz-question"></p>
+      <form class="controls" id="quiz-form">
+        <label>Weight (±0.01) <input id="quiz-answer" type="number" min="0" max="1" step="any" required /></label>
+        <button>Check</button><button type="button" id="quiz-new">Another</button>
+      </form>
+      <p id="quiz-feedback" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <section id="panel-scaling" role="tabpanel" aria-labelledby="tab-scaling" hidden>
+    <div class="card">
+      <h2>One query, eight random keys</h2>
+      <p class="hint">Every vector entry is drawn from N(0, 1). Nothing favors any key. Turn scaling off and increase dₖ: softmax becomes confident anyway.</p>
+      <div class="controls">
+        <label>dₖ = <span id="dk-value"></span> <input id="dk" type="range" min="0" max="8" value="7" /></label>
+        <label><input id="scale-on" type="checkbox" /> Divide by √dₖ</label>
+      </div>
+      <div id="scale-bars"></div>
+      <p class="result" id="scale-summary" aria-live="polite"></p>
+    </div>
+    <div class="card">
+      <h2>Across 1,000 random draws</h2>
+      <p class="hint"><span class="key" style="background:var(--series-2)"></span>unscaled &nbsp; <span class="key" style="background:var(--series-1)"></span>scaled. The dot marks your current setting.</p>
+      <div class="charts" id="scale-charts"></div>
+      <p class="note">“Gradient” is the Frobenius norm of softmax’s Jacobian with respect to its input. The median is shown because a few near-ties keep the mean up after the typical draw has saturated.</p>
+      <details>
+        <summary>Derivation: variance and saturation</summary>
+        <p>For independent entries with mean 0 and variance 1, each product qₘkₘ has mean 0 and variance E[qₘ²]E[kₘ²] = 1. The terms are uncorrelated, so Var(q·k) = dₖ and Var(q·k/√dₖ) = 1.</p>
+        <p>For p = softmax(s), the Jacobian is ∂pᵢ/∂sⱼ = pᵢ(δᵢⱼ − pⱼ). As p approaches one-hot, every entry approaches 0, so little gradient reaches Q and K.</p>
+        <p>Trained vectors aren’t independent Gaussians. The argument explains why scaling is a good starting point for training, and doesn’t claim that trained scores have variance 1.</p>
+      </details>
+    </div>
+  </section>
+
+  <section id="panel-masking" role="tabpanel" aria-labelledby="tab-masking" hidden>
+    <div class="card">
+      <h2>Can the past see the future?</h2>
+      <p class="hint">A model predicting the next token must not use later tokens. The last token, “mice”, has already been edited here. Compare the three masking modes and check whether earlier outputs change.</p>
+      <div class="controls">
+        <label>Mask <select id="mask-mode">
+          <option value="none">None</option>
+          <option value="causal">−∞ before softmax</option>
+          <option value="late">0 after softmax (a common bug)</option>
+        </select></label>
+      </div>
+      <div id="mask-x"></div>
+      <div class="controls"><button id="mask-edit">Edit last token</button><button id="mask-reset">Undo all edits</button></div>
+      <h3>Effect on each output, compared with the unedited input</h3>
+      <div id="mask-change"></div>
+    </div>
+    <div class="card">
+      <h2>What softmax receives and returns</h2>
+      <div class="grid">
+        <div><h3>S / √dₖ + M</h3><div id="mask-scores"></div></div>
+        <div><h3>A</h3><div id="mask-weights"></div></div>
+      </div>
+      <details>
+        <summary>Why does zeroing afterwards leak?</summary>
+        <p>αᵢⱼ = exp(sᵢⱼ) / Σₗ exp(sᵢₗ). Zeroing future weights removes them from the numerator, but their scores are still in every denominator, so a future token rescales the past. Setting sᵢₗ = −∞ first removes them from both.</p>
+        <p>Zeroing and then renormalizing is equivalent in exact arithmetic, but can become 0/0 when a large future score underflows all the visible weights.</p>
+      </details>
+    </div>
+  </section>
+
+  <section id="panel-gpt2" role="tabpanel" aria-labelledby="tab-gpt2" hidden>
+    <p class="data-status" role="status">Loading GPT-2 data…</p>
+    <div id="gpt2-content" hidden>
+      <div class="card">
+        <h2>Twelve heads, one sentence</h2>
+        <p class="hint">These are real Q, K and V vectors from GPT-2 small’s first layer. Your browser computes the attention from them.</p>
+        <div class="controls"><label>Sentence <select id="preset"></select></label></div>
+        <p class="note" id="preset-note"></p>
+        <div class="heads" id="head-list"></div>
+        <p class="note"><b>Look for:</b> in the Mary and John sentence, heads 1 and 5 link the second “John” to the first. Head 3 mostly attends to the current token. Head 7 often looks one token back. These are tendencies, so check them on other sentences.</p>
+      </div>
+      <div class="card">
+        <h2 id="head-title"></h2>
+        <p class="hint">Rows are queries and columns are keys, numbered where a token repeats. Click a weight to trace it.</p>
+        <div id="head-matrix"></div>
+      </div>
+      <div class="card">
+        <h2 id="trace-title"></h2>
+        <p class="hint">First 8 of 64 dimensions shown. The totals use all 64.</p>
+        <div id="trace-vectors"></div>
+        <div class="work" id="trace-work"></div>
+        <details>
+          <summary>Where do q, k and v come from in GPT-2?</summary>
+          <p>X = LayerNorm(token embedding + position embedding), 768 numbers per token. One learned matrix of shape 768×2304 (plus a bias) produces Q, K and V at once, and each is split into 12 heads of 64.</p>
+          <p>Only the first layer is shown. In deeper layers each position already mixes information from earlier tokens, so “attending to a token” no longer means attending to that word alone.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section id="panel-experiments" role="tabpanel" aria-labelledby="tab-experiments" hidden>
+    <div class="card">
+      <h2>1. Shuffle the tokens</h2>
+      <p class="hint">With no positional encoding and no mask, what happens to each token’s output if you reorder the sentence?</p>
+      <div class="controls" id="shuffle-choices">
+        <button data-answer="change">It changes</button>
+        <button data-answer="same">It moves, unchanged</button>
+        <button data-answer="average">All outputs become equal</button>
+      </div>
+      <p id="shuffle-feedback" aria-live="polite"></p>
+      <div id="shuffle-reveal" hidden>
+        <label><input id="shuffle-pe" type="checkbox" /> Add sinusoidal positional encoding</label>
+        <div id="shuffle-output"></div>
+      </div>
+    </div>
+    <p class="data-status" role="status">Loading GPT-2 data…</p>
+    <div id="gpt2-experiments" hidden>
+      <div class="card">
+        <h2>2. Set Q = K</h2>
+        <p class="hint">If queries and keys are identical and there is no mask, what becomes symmetric?</p>
+        <div class="controls" id="symmetry-choices">
+          <button data-answer="both">Scores and weights</button>
+          <button data-answer="scores">Scores only</button>
+          <button data-answer="neither">Neither</button>
+        </div>
+        <p id="symmetry-feedback" aria-live="polite"></p>
+        <div id="symmetry-reveal" hidden>
+          <div class="controls">
+            <label>GPT-2 <select id="symmetry-head"></select></label>
+            <label><input id="symmetry-tie" type="checkbox" checked /> Use Q as K</label>
+          </div>
+          <div id="symmetry-output"></div>
+          <p class="note">Untie them to see what separate projections buy: “i looks for j” no longer implies “j looks for i”.</p>
+        </div>
+      </div>
+      <div class="card">
+        <h2>3. Remove a head: is attention an explanation?</h2>
+        <p class="hint">A first-layer head puts 98% of the last token’s attention in one place. How much will GPT-2’s prediction change if you remove that head?</p>
+        <div class="controls" id="ablation-choices">
+          <button data-answer="large">A lot</button>
+          <button data-answer="unknown">Can’t tell from the weight</button>
+          <button data-answer="zero">Not at all</button>
+        </div>
+        <p id="ablation-feedback" aria-live="polite"></p>
+        <div id="ablation-reveal" hidden>
+          <div class="controls">
+            <label>Sentence <select id="ablation-preset"></select></label>
+            <label>Remove <select id="ablation-head"></select></label>
+          </div>
+          <div id="ablation-output"></div>
+          <p class="note">Precomputed by subtracting the head’s first-layer output at every token and running the other 11 layers. KL(original ‖ ablated) measures how far the next-token distribution moved.</p>
+          <p class="note"><b>Caution:</b> ablation isn’t a perfect explanation either. Zeroing a head pushes later layers outside their usual input range, which can overstate its importance, and redundant heads can hide one another’s effect.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  </main>
+
+  <footer>
+    Math from <a href="https://arxiv.org/abs/1706.03762" target="_blank" rel="noopener">Vaswani et al. (2017)</a>. Vectors derived from <a href="https://huggingface.co/openai-community/gpt2" target="_blank" rel="noopener">GPT-2 small</a> by OpenAI. Runs in your browser with no third-party requests.
+  </footer>
+</div>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

@@ -5,6 +5,7 @@ A collection of teaching resources for AI/ML concepts. **Topics** are organized 
 ## Topics
 
 - [**Embeddings**](embeddings/) — [a walkthrough notebook](embeddings/embeddings.ipynb) (word vectors, analogies, a bias cautionary example, document embeddings) plus the [Embedding Explorer](embeddings/embedding-explorer/) interactive tool covering the same ground hands-on. See [embeddings/README.md](embeddings/README.md).
+- [**Attention**](attention/) — the [Attention Lab](attention/attention-lab/) interactive tool: scaled dot-product attention with the real math, worked by hand and inside GPT-2. See [attention/README.md](attention/README.md).
 
 ## Workshops
 
