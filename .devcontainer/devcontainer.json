@@ -1,0 +1,9 @@
+{
+  "name": "AI Teaching Tools",
+  "image": "mcr.microsoft.com/devcontainers/universal:6",
+  "customizations": {
+    "vscode": {
+      "extensions": ["anthropic.claude-code"]
+    }
+  }
+}
